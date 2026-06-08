@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <title>Benchmark — RigCheck</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ---- FILTER PANEL ---- */
+    .filter-panel {
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--border);
+    }
+    .filter-section {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .filter-section:last-child { border-bottom: none; }
+    .filter-section-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-4);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 8px;
+    }
+    .chip-row {
+      display: flex;
+      gap: 7px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+    .chip-row::-webkit-scrollbar { display: none; }
+    .chip {
+      padding: 6px 14px;
+      border-radius: 99px;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-3);
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+    .chip:hover { border-color: var(--border-2); color: var(--text-2); }
+    .chip.active { background: var(--blue); border-color: var(--blue); color: #fff; box-shadow: 0 0 10px var(--blue-glow); }
+
+    /* ---- BENCH CARD ---- */
+    .bench-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: 18px 20px;
+      margin: 0 20px 12px;
+      transition: border-color .15s;
+    }
+    .bench-card:hover { border-color: var(--border-2); }
+    .bench-game-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    .bench-hw {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .bench-hw-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-2);
+    }
+    .bench-hw-line-icon { font-size: 14px; }
+    .bench-tags {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .bench-tag {
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .bench-tag-res { background: var(--blue-soft); color: var(--blue); }
+    .bench-tag-qual { background: var(--surface-2); color: var(--text-3); }
+    .fps-display {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+    .fps-num {
+      font-size: 40px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -2px;
+    }
+    .fps-label { font-size: 16px; font-weight: 600; color: var(--text-3); }
+    .fps-range { font-size: 12px; color: var(--text-4); margin-left: auto; align-self: center; }
+    .fps-bar { height: 5px; background: var(--surface-2); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+    .fps-bar-fill { height: 100%; border-radius: 3px; }
+    .fps-excellent .fps-num { color: var(--green); }
+    .fps-excellent .fps-bar-fill { background: var(--green); }
+    .fps-good .fps-num { color: var(--blue); }
+    .fps-good .fps-bar-fill { background: var(--blue); }
+    .fps-ok .fps-num { color: var(--amber); }
+    .fps-ok .fps-bar-fill { background: var(--amber); }
+    .fps-low .fps-num { color: var(--red); }
+    .fps-low .fps-bar-fill { background: var(--red); }
+    .bench-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .bench-submitter { font-size: 11px; color: var(--text-4); }
+
+    /* ---- SORT / RESULT COUNT BAR ---- */
+    .results-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .results-count { font-size: 13px; color: var(--text-3); font-weight: 500; }
+    .sort-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .15s;
+    }
+    .sort-btn:hover { background: var(--surface-2); }
+  </style>
+</head>
+<body>
+<div id="app-shell">
+  <header class="top-bar">
+    <a href="/" class="top-bar-logo">
+      <div class="top-bar-icon">⚡</div>
+      <span class="top-bar-title">Rig<span>Check</span></span>
+    </a>
+    <div class="top-bar-actions">
+      <button class="btn btn-primary btn-sm" id="submit-btn">+ Ekle</button>
+    </div>
+  </header>
+
+  <!-- Filters -->
+  <div class="filter-panel">
+    <div class="filter-section">
+      <div class="filter-section-label">Oyun</div>
+      <div class="chip-row" id="game-chips">
+        <button class="chip active" data-val="">Tümü</button>
+      </div>
+    </div>
+    <div class="filter-section">
+      <div class="filter-section-label">Çözünürlük</div>
+      <div class="chip-row" id="res-chips">
+        <button class="chip active" data-val="">Tümü</button>
+        <button class="chip" data-val="1080p">1080p</button>
+        <button class="chip" data-val="1440p">1440p</button>
+        <button class="chip" data-val="4K">4K</button>
+      </div>
+    </div>
+    <div class="filter-section">
+      <div class="filter-section-label">Kalite</div>
+      <div class="chip-row" id="qual-chips">
+        <button class="chip active" data-val="">Tümü</button>
+        <button class="chip" data-val="Low">Düşük</button>
+        <button class="chip" data-val="Medium">Orta</button>
+        <button class="chip" data-val="High">Yüksek</button>
+        <button class="chip" data-val="Ultra">Ultra</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="screen">
+    <div class="results-bar">
+      <span class="results-count" id="results-count">Yükleniyor...</span>
+      <button class="sort-btn" id="sort-btn">⬇ FPS (Yüksek)</button>
+    </div>
+    <div style="padding-top:12px" id="bench-list">
+      <div class="loading-center"><div class="spinner"></div></div>
+    </div>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="/" class="nav-item">
+      <span class="nav-item-icon">🏠</span>
+      <span class="nav-item-label">Ana Sayfa</span>
+      <span class="nav-dot"></span>
+    </a>
+    <a href="/builder.html" class="nav-item">
+      <span class="nav-item-icon">🔧</span>
+      <span class="nav-item-label">Builder</span>
+      <span class="nav-dot"></span>
+    </a>
+    <a href="/support.html" class="nav-item">
+      <span class="nav-item-icon">💬</span>
+      <span class="nav-item-label">Destek</span>
+      <span class="nav-dot"></span>
+    </a>
+    <a href="/benchmarks.html" class="nav-item active">
+      <span class="nav-item-icon">📊</span>
+      <span class="nav-item-label">Bench</span>
+      <span class="nav-dot"></span>
+    </a>
+    <a href="/errors.html" class="nav-item">
+      <span class="nav-item-icon">🔴</span>
+      <span class="nav-item-label">Hatalar</span>
+      <span class="nav-dot"></span>
+    </a>
+  </nav>
+</div>
+
+<!-- Submit Benchmark -->
+<div class="modal-overlay" id="submit-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h2>Benchmark Ekle</h2>
+      <button class="modal-close" id="close-submit">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Oyun *</label>
+        <input class="form-input" id="sub-game" type="text" placeholder="Cyberpunk 2077" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">CPU *</label>
+        <input class="form-input" id="sub-cpu" type="text" placeholder="Ryzen 7 5800X3D" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">GPU *</label>
+        <input class="form-input" id="sub-gpu" type="text" placeholder="GeForce RTX 4070" />
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">Çözünürlük</label>
+          <select class="form-select" id="sub-res">
+            <option>1080p</option><option>1440p</option><option>4K</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kalite</label>
+          <select class="form-select" id="sub-qual">
+            <option>Low</option><option>Medium</option><option>High</option><option selected>Ultra</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ort. FPS *</label>
+          <input class="form-input" id="sub-fps-avg" type="number" placeholder="120" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Min FPS</label>
+          <input class="form-input" id="sub-fps-min" type="number" placeholder="80" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Adın</label>
+        <input class="form-input" id="sub-author" type="text" placeholder="Anonim" />
+      </div>
+      <div id="submit-error" class="error-banner" style="display:none"></div>
+      <button class="btn btn-primary btn-full" id="submit-confirm">Gönder</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+<script type="module" src="./js/benchmarks.js"></script>
+</body>
+</html>

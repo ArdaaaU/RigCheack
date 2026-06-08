@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <title>PC Builder — RigCheck</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ---- BUILDER TABS ---- */
+    .builder-tabs {
+      display: flex;
+      gap: 0;
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .builder-tabs::-webkit-scrollbar { display: none; }
+    .builder-tab {
+      padding: 14px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-3);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: color .15s, border-color .15s;
+      background: none;
+      border-left: none; border-right: none; border-top: none;
+      font-family: inherit;
+    }
+    .builder-tab:hover { color: var(--text-2); }
+    .builder-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+    /* ---- COMPONENT LIST (picker) ---- */
+    .comp-list { display: flex; flex-direction: column; }
+    .comp-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background .12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .comp-row:active { background: var(--surface); }
+    .comp-row-icon {
+      width: 44px; height: 44px;
+      border-radius: var(--r);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .icon-cpu  { background: rgba(59,130,246,.15); }
+    .icon-gpu  { background: rgba(168,85,247,.15); }
+    .icon-ram  { background: rgba(34,197,94,.15); }
+    .icon-psu  { background: rgba(245,158,11,.15); }
+    .icon-mb   { background: rgba(239,68,68,.15); }
+    .icon-ssd  { background: rgba(14,165,233,.15); }
+    .comp-row-info { flex: 1; min-width: 0; }
+    .comp-row-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .comp-row-spec { font-size: 12px; color: var(--text-3); margin-top: 3px; display: flex; gap: 6px; flex-wrap: wrap; }
+    .spec-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-3);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .comp-row-right { text-align: right; flex-shrink: 0; }
+    .comp-price { font-size: 14px; font-weight: 700; color: var(--blue); }
+    .comp-add-btn {
+      width: 32px; height: 32px;
+      background: var(--blue-soft);
+      border: 1px solid rgba(59,130,246,.3);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      color: var(--blue);
+      cursor: pointer;
+      margin-top: 6px;
+      margin-left: auto;
+      transition: background .15s;
+    }
+    .comp-add-btn:hover { background: var(--blue); color: #fff; }
+
+    /* ---- BUILD CANVAS ---- */
+    .build-slot {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .build-slot-icon {
+      width: 44px; height: 44px;
+      border-radius: var(--r);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border: 1.5px dashed var(--border);
+    }
+    .build-slot.filled .build-slot-icon {
+      border-style: solid;
+      border-color: transparent;
+    }
+    .build-slot-info { flex: 1; min-width: 0; }
+    .build-slot-label { font-size: 11px; font-weight: 700; color: var(--text-4); text-transform: uppercase; letter-spacing: .4px; }
+    .build-slot-name { font-size: 14px; font-weight: 600; color: var(--text); margin-top: 2px; }
+    .build-slot-detail { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+    .build-slot-empty { font-size: 13px; color: var(--text-4); margin-top: 2px; font-style: italic; }
+    .slot-remove {
+      width: 28px; height: 28px;
+      background: var(--red-soft);
+      border: none; border-radius: 50%;
+      color: var(--red);
+      font-size: 14px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s;
+    }
+    .slot-remove:hover { background: var(--red); color: #fff; }
+    .slot-add-hint {
+      width: 28px; height: 28px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      color: var(--text-4);
+      flex-shrink: 0;
+    }
+
+    /* ---- SUMMARY CARD ---- */
+    .summary-section {
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .summary-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+    }
+    .summary-row-label { color: var(--text-3); font-weight: 500; }
+    .summary-row-value { font-weight: 700; color: var(--text); }
+    .summary-total { font-size: 16px; color: var(--blue); }
+
+    .compat-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: var(--r);
+      font-size: 13px;
+      line-height: 1.5;
+      font-weight: 500;
+    }
+    .compat-item.ok     { background: var(--green-soft); color: var(--green); }
+    .compat-item.warn   { background: var(--amber-soft); color: var(--amber); }
+    .compat-item.error  { background: var(--red-soft);   color: var(--red); }
+    .compat-icon { flex-shrink: 0; font-size: 14px; }
+
+    /* ---- SAVED BUILDS ---- */
+    .saved-build-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background .12s;
+    }
+    .saved-build-row:active { background: var(--surface); }
+    .saved-build-icon {
+      width: 40px; height: 40px;
+      background: var(--blue-soft);
+      border-radius: var(--r);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    /* ---- VIEW SWITCHER (Build / Pick / Saved) ---- */
+    .view-switcher {
+      display: flex;
+      gap: 8px;
+      padding: 12px 20px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .view-btn {
+      flex: 1;
+      padding: 9px 8px;
+      border-radius: var(--r);
+      border: 1.5px solid var(--border);
+      background: transparent;
+      color: var(--text-3);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: all .15s;
+      font-family: inherit;
+    }
+    .view-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; box-shadow: 0 0 12px var(--blue-glow); }
+
+    /* Sticky save bar */
+    .save-bar {
+      padding: 12px 20px;
+      background: var(--bg-2);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .build-name-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+    }
+    .build-name-input:focus { outline: none; border-color: var(--blue); }
+
+    /* Search in picker */
+    .picker-search {
+      padding: 10px 20px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .picker-search-inner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: 9px 14px;
+    }
+    .picker-search-inner:focus-within { border-color: var(--blue); }
+    .picker-search-inner input {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+    }
+    .picker-search-inner input::placeholder { color: var(--text-4); }
+  </style>
+</head>
+<body>
+<div id="app-shell">
+  <header class="top-bar">
+    <a href="/" class="top-bar-logo">
+      <div class="top-bar-icon">⚡</div>
+      <span class="top-bar-title">Rig<span>Check</span></span>
+    </a>
+    <div class="top-bar-actions">
+      <div class="icon-btn" id="clear-btn" title="Temizle">🗑</div>
+    </div>
+  </header>
+
+  <!-- View switcher -->
+  <div class="view-switcher">
+    <button class="view-btn active" data-view="build">🔧 Build</button>
+    <button class="view-btn" data-view="pick">➕ Parça Ekle</button>
+    <button class="view-btn" data-view="saved">💾 Kaydedilenler</button>
+  </div>
+
+  <main class="screen">
+    <!-- BUILD VIEW -->
+    <div id="view-build">
+      <div class="section-header">
+        <div><div class="section-title">Kurulumun</div><div class="section-subtitle" id="build-summary-sub">Parça seçmeye başla</div></div>
+      </div>
+
+      <!-- Compatibility checks -->
+      <div style="padding:0 20px 16px;display:flex;flex-direction:column;gap:6px" id="compat-list">
+        <div class="compat-item ok"><span class="compat-icon">✓</span><span>Parça seç ve uyumluluğu kontrol et</span></div>
+      </div>
+
+      <!-- Build slots -->
+      <div id="build-slots"></div>
+
+      <!-- Summary -->
+      <div class="section-gap"></div>
+      <div class="summary-section">
+        <div class="summary-row">
+          <span class="summary-row-label">Toplam Güç (TDP)</span>
+          <span class="summary-row-value" id="sum-tdp">0W</span>
+        </div>
+        <div class="summary-row" id="psu-row">
+          <span class="summary-row-label">PSU Yükleme</span>
+          <span class="summary-row-value" id="sum-psu">PSU seçilmedi</span>
+        </div>
+        <div class="progress-bar progress-blue" id="psu-progress" style="margin:0">
+          <div class="progress-fill" id="psu-progress-fill" style="width:0%"></div>
+        </div>
+        <div class="divider-full"></div>
+        <div class="summary-row">
+          <span class="summary-row-label fw-700" style="color:var(--text)">Toplam Maliyet</span>
+          <span class="summary-row-value summary-total" id="sum-price">$0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PICK VIEW -->
+    <div id="view-pick" style="display:none">
+      <div class="picker-search">
+        <div class="picker-search-inner">
+          <span style="font-size:16px;color:var(--text-3)">🔍</span>
+          <input type="text" id="picker-search" placeholder="Parça ara..." />
+        </div>
+      </div>
+      <div class="builder-tabs" id="type-tabs">
+        <button class="builder-tab active" data-type="">Tümü</button>
+        <button class="builder-tab" data-type="cpu">CPU</button>
+        <button class="builder-tab" data-type="gpu">GPU</button>
+        <button class="builder-tab" data-type="ram">RAM</button>
+        <button class="builder-tab" data-type="motherboard">Anakart</button>
+        <button class="builder-tab" data-type="psu">PSU</button>
+        <button class="builder-tab" data-type="ssd">SSD</button>
+      </div>
+      <div class="comp-list" id="comp-list">
+        <div class="loading-center"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- SAVED VIEW -->
+    <div id="view-saved" style="display:none">
+      <div class="section-header">
+        <div><div class="section-title">Kaydedilen Buildler</div></div>
+      </div>
+      <div id="saved-list">
+        <div class="loading-center"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Save bar (only in build view) -->
+  <div class="save-bar" id="save-bar">
+    <input class="build-name-input" id="build-name" type="text" value="Benim Buildum" placeholder="Build adı..." />
+    <button class="btn btn-primary btn-sm" id="save-btn">💾 Kaydet</button>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="/" class="nav-item">
+      <span class="nav-item-icon">🏠</span>
+      <span class="nav-item-label">Ana Sayfa</span>
+      <span class="nav-dot"></span>
+    </a>
+    <a href="/builder.html" class="nav-item active">
+      <span class="nav-item-icon">🔧</span>
+      <span class="nav-item-label">Builder</span>
+      <span class="nav-dot"></span>
+    </a>
+    <a href="/support.html" class="nav-item">
+      <span class="nav-item-icon">💬</span>
+      <span class="nav-item-label">Destek</span>
+      <span class="nav-dot"></span>
+    </a>
+    <a href="/benchmarks.html" class="nav-item">
+      <span class="nav-item-icon">📊</span>
+      <span class="nav-item-label">Bench</span>
+      <span class="nav-dot"></span>
+    </a>
+    <a href="/errors.html" class="nav-item">
+      <span class="nav-item-icon">🔴</span>
+      <span class="nav-item-label">Hatalar</span>
+      <span class="nav-dot"></span>
+    </a>
+  </nav>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+<script type="module" src="./js/builder.js"></script>
+</body>
+</html>

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <title>RigCheck</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ---- HERO ---- */
+    .hero {
+      padding: 28px 20px 20px;
+      background: linear-gradient(180deg, rgba(59,130,246,.08) 0%, transparent 100%);
+    }
+    .hero-greeting {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 6px;
+    }
+    .hero-title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+    .hero-title span { color: var(--blue); }
+
+    /* Quick error search */
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: 12px 16px;
+      cursor: text;
+      transition: border-color .15s;
+    }
+    .search-bar:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft); }
+    .search-bar input {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      outline: none;
+    }
+    .search-bar input::placeholder { color: var(--text-4); font-family: inherit; }
+    .search-bar-icon { font-size: 16px; color: var(--text-3); flex-shrink: 0; }
+    .search-btn {
+      background: var(--blue);
+      border: none;
+      color: #fff;
+      font-size: 14px;
+      padding: 6px 14px;
+      border-radius: var(--r);
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+    .quick-results {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .quick-results.show { display: flex; }
+    .qr-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: border-color .15s;
+    }
+    .qr-item:hover { border-color: var(--border-2); }
+    .qr-code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--red); font-weight: 500; }
+    .qr-title { font-size: 13px; color: var(--text-2); margin-top: 2px; }
+
+    /* ---- FEATURE GRID ---- */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 0 20px;
+    }
+    .feature-tile {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: 20px 16px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all .2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-tile::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .feature-tile:hover { transform: scale(.98); }
+    .feature-tile:active { transform: scale(.95); }
+    .feature-tile.blue::before  { background: radial-gradient(circle at 0% 0%, rgba(59,130,246,.15), transparent 70%); }
+    .feature-tile.green::before { background: radial-gradient(circle at 0% 0%, rgba(34,197,94,.12), transparent 70%); }
+    .feature-tile.amber::before { background: radial-gradient(circle at 0% 0%, rgba(245,158,11,.12), transparent 70%); }
+    .feature-tile.red::before   { background: radial-gradient(circle at 0% 0%, rgba(239,68,68,.12), transparent 70%); }
+    .feature-tile:hover::before { opacity: 1; }
+    .tile-icon {
+      font-size: 28px;
+      line-height: 1;
+    }
+    .tile-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .tile-desc {
+      font-size: 12px;
+      color: var(--text-3);
+      line-height: 1.4;
+    }
+    .tile-arrow {
+      font-size: 16px;
+      color: var(--text-4);
+      margin-top: auto;
+    }
+
+    /* ---- STATS SCROLL ROW ---- */
+    .stats-row-item {
+      min-width: 110px;
+    }
+    .stats-row-item .stat-value { font-size: 24px; }
+
+    /* ---- RECENT THREADS ---- */
+    .thread-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 16px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color .15s;
+      min-width: 260px;
+      max-width: 300px;
+      flex-shrink: 0;
+    }
+    .thread-card:hover { border-color: var(--border-2); }
+    .thread-card-title {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.4;
+      color: var(--text);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .thread-card-meta {
+      font-size: 12px;
+      color: var(--text-3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+<div id="app-shell">
+  <!-- TOP BAR -->
+  <header class="top-bar">
+    <a href="/" class="top-bar-logo">
+      <div class="top-bar-icon">⚡</div>
+      <span class="top-bar-title">Rig<span>Check</span></span>
+    </a>
+    <div class="top-bar-actions">
+      <div class="icon-btn" title="Notifications">🔔</div>
+    </div>
+  </header>
+
+  <!-- SCREEN -->
+  <main class="screen">
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-greeting">Merhaba, Gamer 👋</div>
+      <h1 class="hero-title">Donanımını <span>Kontrol Et</span>,<br>Güvenle Topla.</h1>
+      <div class="search-bar" id="search-bar">
+        <span class="search-bar-icon">🔍</span>
+        <input type="text" id="quick-search" placeholder="Hata kodu ara: 0x000001A, A2..." />
+        <button class="search-btn" id="quick-search-btn">Ara</button>
+      </div>
+      <div class="quick-results" id="quick-results"></div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="h-scroll" id="stats-row" style="padding-top:4px">
+      <div class="stat-card stats-row-item">
+        <div class="stat-value" id="stat-comp" style="color:var(--blue)">—</div>
+        <div class="stat-label">Parça</div>
+      </div>
+      <div class="stat-card stats-row-item">
+        <div class="stat-value" id="stat-threads" style="color:var(--green)">—</div>
+        <div class="stat-label">Destek</div>
+      </div>
+      <div class="stat-card stats-row-item">
+        <div class="stat-value" id="stat-bench" style="color:var(--amber)">—</div>
+        <div class="stat-label">Benchmark</div>
+      </div>
+      <div class="stat-card stats-row-item">
+        <div class="stat-value" id="stat-errors" style="color:var(--red)">—</div>
+        <div class="stat-label">Hata Kodu</div>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div class="section-header" style="padding-bottom:12px">
+      <div>
+        <div class="section-title">Araçlar</div>
+      </div>
+    </div>
+    <div class="feature-grid">
+      <a href="/builder.html" class="feature-tile blue">
+        <div class="tile-icon">🔧</div>
+        <div class="tile-name">PC Builder</div>
+        <div class="tile-desc">Uyumluluk kontrolüyle parça seç</div>
+        <div class="tile-arrow">→</div>
+      </a>
+      <a href="/support.html" class="feature-tile green">
+        <div class="tile-icon">💬</div>
+        <div class="tile-name">Canlı Destek</div>
+        <div class="tile-desc">Uzmanlardan anlık yardım al</div>
+        <div class="tile-arrow">→</div>
+      </a>
+      <a href="/benchmarks.html" class="feature-tile amber">
+        <div class="tile-icon">📊</div>
+        <div class="tile-name">Benchmark</div>
+        <div class="tile-desc">Gerçek FPS verilerini karşılaştır</div>
+        <div class="tile-arrow">→</div>
+      </a>
+      <a href="/errors.html" class="feature-tile red">
+        <div class="tile-icon">🔴</div>
+        <div class="tile-name">Hata Kodları</div>
+        <div class="tile-desc">BSOD & POST kodlarını çöz</div>
+        <div class="tile-arrow">→</div>
+      </a>
+    </div>
+
+    <!-- Recent threads -->
+    <div class="section-header">
+      <div>
+        <div class="section-title">Son Destek Konuları</div>
+      </div>
+      <a href="/support.html" class="see-all">Tümü →</a>
+    </div>
+    <div class="h-scroll" id="threads-preview">
+      <div class="loading-center" style="padding:20px 40px"><div class="spinner"></div></div>
+    </div>
+
+    <div style="height:8px"></div>
+  </main>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <a href="/" class="nav-item active">
+      <span class="nav-item-icon">🏠</span>
+      <span class="nav-item-label">Ana Sayfa</span>
+      <span class="nav-dot"></span>
+    </a>
+    <a href="/builder.html" class="nav-item">
+      <span class="nav-item-icon">🔧</span>
+      <span class="nav-item-label">Builder</span>
+      <span class="nav-dot"></span>
+    </a>
+    <a href="/support.html" class="nav-item">
+      <span class="nav-item-icon">💬</span>
+      <span class="nav-item-label">Destek</span>
+      <span class="nav-dot"></span>
+    </a>
+    <a href="/benchmarks.html" class="nav-item">
+      <span class="nav-item-icon">📊</span>
+      <span class="nav-item-label">Bench</span>
+      <span class="nav-dot"></span>
+    </a>
+    <a href="/errors.html" class="nav-item">
+      <span class="nav-item-icon">🔴</span>
+      <span class="nav-item-label">Hatalar</span>
+      <span class="nav-dot"></span>
+    </a>
+  </nav>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script type="module">
+import { supabase, getThreads, searchErrorCodes } from './js/api.js';
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function timeAgo(iso) {
+  const m = Math.floor((Date.now() - new Date(iso)) / 60000);
+  if (m < 1) return 'az önce';
+  if (m < 60) return m + 'dk önce';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'sa önce';
+  return Math.floor(h / 24) + 'g önce';
+}
+
+async function loadStats() {
+  try {
+    const [a,b,c,d] = await Promise.all([
+      supabase.from('components').select('id',{count:'exact',head:true}),
+      supabase.from('support_threads').select('id',{count:'exact',head:true}),
+      supabase.from('benchmarks').select('id',{count:'exact',head:true}),
+      supabase.from('error_codes').select('id',{count:'exact',head:true}),
+    ]);
+    document.getElementById('stat-comp').textContent    = a.count ?? 0;
+    document.getElementById('stat-threads').textContent = b.count ?? 0;
+    document.getElementById('stat-bench').textContent   = c.count ?? 0;
+    document.getElementById('stat-errors').textContent  = d.count ?? 0;
+  } catch {}
+}
+
+async function loadThreads() {
+  const el = document.getElementById('threads-preview');
+  try {
+    const threads = await getThreads();
+    if (!threads.length) {
+      el.innerHTML = `<div class="empty-state" style="min-width:260px;padding:24px"><div class="empty-state-icon">💬</div><p>Henüz konu yok.</p></div>`;
+      return;
+    }
+    el.innerHTML = threads.slice(0,5).map(t => `
+      <a href="/support.html?thread=${t.id}" class="thread-card">
+        <span class="badge badge-${t.status}">${t.status === 'open' ? '● Açık' : '✓ Çözüldü'}</span>
+        <div class="thread-card-title">${esc(t.title)}</div>
+        <div class="thread-card-meta">
+          <span>${esc(t.author)}</span>
+          <span>·</span>
+          <span>${timeAgo(t.created_at)}</span>
+        </div>
+      </a>
+    `).join('');
+  } catch {
+    el.innerHTML = `<div style="padding:20px;color:var(--text-3);font-size:14px">Yüklenemedi.</div>`;
+  }
+}
+
+let searchTimeout;
+const qInput = document.getElementById('quick-search');
+const qResults = document.getElementById('quick-results');
+
+qInput.addEventListener('input', () => {
+  clearTimeout(searchTimeout);
+  const q = qInput.value.trim();
+  if (q.length < 2) { qResults.classList.remove('show'); return; }
+  searchTimeout = setTimeout(async () => {
+    try {
+      const results = await searchErrorCodes(q);
+      if (!results.length) { qResults.classList.remove('show'); return; }
+      qResults.innerHTML = results.slice(0,3).map(e => `
+        <div class="qr-item" onclick="location.href='/errors.html?q=${encodeURIComponent(e.code)}'">
+          <div class="qr-code">${esc(e.code)}</div>
+          <div class="qr-title">${esc(e.title)}</div>
+        </div>
+      `).join('');
+      qResults.classList.add('show');
+    } catch {}
+  }, 300);
+});
+
+document.getElementById('quick-search-btn').addEventListener('click', () => {
+  const q = qInput.value.trim();
+  if (q) location.href = '/errors.html?q=' + encodeURIComponent(q);
+});
+qInput.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('quick-search-btn').click(); });
+
+loadStats();
+loadThreads();
+</script>
+</body>
+</html>
