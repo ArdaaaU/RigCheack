@@ -31,5 +31,6 @@ RigCheck/
     ├── api.js          # Supabase veritabanı bağlantıları
     ├── builder.js      # Sürükle-bırak mantığı ve uyumluluk algoritmaları
     └── ...
+```
 
 [![Open in Bolt](https://bolt.new/static/open-in-bolt.svg)](https://bolt.new/~/stackblitz-starters-chcupaj6)
